@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card.jsx";
 import {Button} from "@/components/ui/button.jsx";
 import {cn} from "@/lib/utils.js";
@@ -20,6 +20,12 @@ function LoginForm(props) {
     const user = useSelector((state) => state.user);
     const dispatch = useDispatch();
 
+
+    useEffect(()=>{
+        if(localStorage.getItem("token")){
+            navigate("/")
+        }
+    }, [])
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword)
     }

@@ -11,9 +11,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {Link} from "react-router-dom";
-import {Loader2, Eye, ChevronLeft, ChevronRight, Clock, Mail} from "lucide-react";
+import {Loader2, Eye, ChevronLeft, ChevronRight, Clock, Mail, Download} from "lucide-react";
 import {Button} from "@/components/ui/button.jsx";
 import {useQuery} from "@tanstack/react-query";
+import {Document, Packer, Paragraph, TextRun, ImageRun, SectionType} from 'docx';
+import { saveAs } from 'file-saver';
+import Sertificate from "@/components/layout/Sertificate.jsx";
+import DownloadResult from "@/components/layout/DownloadResult.jsx";
 
 
 const fetchResults = async (email) => {
@@ -39,6 +43,13 @@ function ResultsPage(props) {
     const totalPages =!isPending && Math.ceil(data.length / itemsPerPage)
     const paginatedData =!isPending && data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
+    useEffect(()=>{
+        sessionStorage.removeItem("timer");
+        sessionStorage.removeItem("currentIndex");
+        sessionStorage.removeItem("timer");
+        sessionStorage.removeItem("timer");
+    }, [])
+
     const getPercentageColor = (percentage) => {
         if (percentage >= 80) return "bg-green-500"
         if (percentage >= 60) return "bg-yellow-500"
@@ -56,18 +67,6 @@ function ResultsPage(props) {
         const end = new Date(updatedAt).getTime()
         return formatDuration(Math.floor((end - start) / 1000))
     }
-    // const getResults = async () => {
-    //     await fetch(`${import.meta.env.VITE_SERVER}/test/results/${user.email}`)
-    //         .then(res => res.json())
-    //         .then(data => {
-    //             setData(data)
-    //             setLoading(false)
-    //             console.log(data)
-    //         })
-    // }
-    // useEffect(() => {
-    //     getResults()
-    // }, [user])
 
     if (isPending) {
         return (
@@ -78,8 +77,8 @@ function ResultsPage(props) {
     }
     return (
         <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
-            <Card className="w-full max-w-5xl mx-auto my-8">
+            <div className="max-w-10xl mx-auto">
+            <Card className="w-full max-w-10xl mx-auto my-8">
                 <CardHeader>
                     <CardTitle className="text-2xl font-bold text-center">Test Natijalari</CardTitle>
                 </CardHeader>
@@ -122,13 +121,26 @@ function ResultsPage(props) {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
-                                                    <TableCell className="text-right">
-                                                        <Button variant="outline" size="sm" asChild>
+                                                    <TableCell className="flex flex-col lg:flex-row justify-end text-center">
+                                                        <Button variant="outline" size="sm" className={``} asChild>
                                                             <Link to={`/results/${item._id}`}>
-                                                                <Eye className="w-4 h-4 mr-2" />
+                                                                <Eye className="w-4 h-4" />
                                                                 Ko'rmoq
                                                             </Link>
                                                         </Button>
+                                                        <DownloadResult
+                                                            subTopicNames={item.subtopicname.join(", ")}
+                                                            time={timeTaken}
+                                                            result={percentage}
+                                                            email={user.email}
+                                                            userName={user.name}
+                                                            questionLength={item.questions.length}
+                                                        />
+                                                        <Sertificate
+                                                            userName={user.name}
+                                                            result={percentage.toString()}
+                                                            subtopics={item.subtopicname.join(", ")}
+                                                        />
                                                     </TableCell>
                                                 </TableRow>
                                             )

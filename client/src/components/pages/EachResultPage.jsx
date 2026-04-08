@@ -89,7 +89,7 @@ function EachResultPage(props) {
                   {index + 1}
                 </span>
                                 <div className="flex flex-col">
-                                    <span>{question.questionText}</span>
+                                    <span>{question.status==="b"?"Bilish: ":(question.status==="q")?"Qo'llash: ":(question.status==="m")?"Mulohaza: ":""}{question.questionText}</span>
                                     {question.questionImage && (
                                         <img
                                             src={question.questionImage || "/placeholder.svg"}
@@ -176,6 +176,18 @@ function EachResultPage(props) {
                                         )}
                                     </div>
                                 </div>
+                                {
+                                    question.solutionImage
+                                    ?
+                                        <div className={`font-semibold`}>
+                                            <span className="mr-2">Yechim: </span>
+                                            <img src={question.solutionImage} alt=""/>
+                                        </div>
+                                    :
+                                        <span className="mr-2 font-semibold">Yechim: Yo'q</span>
+
+
+                                }
                             </div>
                         </CardContent>
                     </Card>

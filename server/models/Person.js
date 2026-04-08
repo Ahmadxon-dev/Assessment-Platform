@@ -3,7 +3,7 @@ const {Schema, model} = require("mongoose");
 
 const personSchema = new Schema({
     email:{type:String, required:true, unique:true},
-    password: {type:String, require:true},
+    password: {type:String, required:true},
     name: {type:String, required:true},
     role: {type: String, enum: ["admin", "user", "bosh admin"], default:"user", required: true},
     isAbleToChangeRoles: {type: Boolean, default: false},

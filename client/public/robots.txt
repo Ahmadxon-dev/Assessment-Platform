@@ -1,0 +1,24 @@
+# Allow all bots to access everything
+User-agent: *
+
+# Block bots from crawling the login or user dashboard pages
+Disallow: /signup/
+Disallow: /signin/
+
+# Block bots from crawling sensitive files or directories
+Disallow: /private/
+Disallow: /downloads/
+
+# Prevent bots from crawling test results page (no need to index test results)
+Disallow: /results/
+Disallow: /users/
+Disallow: /profile/settings/
+Disallow: /allresults/
+
+# Allow all bots to crawl the public resources like problems, tests
+Allow: /definetest/
+Allow: /addtopic/
+Allow: /testtopdf/
+
+# Block all bots from crawling PDFs (if they aren't essential for indexing)
+Disallow: *.pdf

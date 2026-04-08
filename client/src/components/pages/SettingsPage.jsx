@@ -95,7 +95,7 @@ function SettingsPage(props) {
                                 <CardContent className="space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="name" className="text-sm font-medium">
-                                            Name
+                                            Ism
                                         </Label>
                                         <Input
                                             id="name"

@@ -32,10 +32,19 @@ const TestSchema = new Schema({
             // enum: ['option1', 'option2', 'option3', 'option4'],
             required: false
         },
+        solutionImage:{
+            type:String,
+            required: false
+        },
         correctAnswer: {
             type: String,
             enum: ['option1', 'option2', 'option3', 'option4', 'option5'],
             required: true
+        },
+        status:{
+            type:String,
+            required:false,
+            default:null
         }
     }],
     startTime: Date,

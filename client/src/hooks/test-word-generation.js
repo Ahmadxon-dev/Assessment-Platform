@@ -8,15 +8,20 @@ import {
     Table, TableCell,
     TableRow,
     TextRun,
-    WidthType
+    WidthType,
 } from "docx";
 import QRCode from "qrcode";
 
-export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls, setBtnLoader, setZagolovokText, encryptData) => {
+export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls, setBtnLoader, setZagolovokText, encryptData,uuid) => {
     const urls = [];
 
     for (const [index, questions] of variations.entries()) {
         const children = [
+            new Paragraph({
+                children: [new TextRun({text: `${uuid}`, color: '#000000'})],
+                heading: HeadingLevel.HEADING_6,
+                alignment: AlignmentType.LEFT
+            }),
             new Paragraph({
                 children: [new TextRun({text: `${zagolovokText}`, color: '#000000', bold: true})],
                 heading: HeadingLevel.HEADING_1,
@@ -48,6 +53,13 @@ export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls
                     bold: true
                 })], // Reduced size
             }),
+            new Paragraph({
+                children: [new TextRun({
+                    text: "",
+                    color: '#000000',
+                    bold: true
+                })], // Reduced size
+            }),
         ];
         const childrenForColumn = []
         for (const [i, q] of questions.entries()) {
@@ -55,12 +67,13 @@ export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: `${i + 1}. ${q.questionText}`,
+                            text: `${i + 1}.(${q.status==="b"?"Bilish":""}${q.status==="q"?"Qo'llash":""}${q.status==="m"?"Mulohaza":""}) ${q.questionText}`,
                             font: "Cambria Math",
                             color: '#000000',
                             size: 24
                         }),
                     ],
+                    alignment: AlignmentType.JUSTIFIED
                 })
             )
 
@@ -83,6 +96,7 @@ export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls
                                     },
                                 }),
                             ],
+                            alignment: AlignmentType.JUSTIFIED
                         })
                     );
                 } catch (error) {
@@ -108,6 +122,7 @@ export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls
                             size: 24,
                         }),
                     ],
+                    alignment: AlignmentType.JUSTIFIED,
                     spacing: {
                         after: 200,
                     }
@@ -245,6 +260,7 @@ export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls
                 {
                     children: childrenForFooter,
                     properties: {
+                        type: SectionType.CONTINUOUS,
                         margin: {
                             top: 320,
                             bottom: 250,
@@ -264,22 +280,31 @@ export const generateTestWordDocs = async (variations, zagolovokText, setPdfUrls
     setZagolovokText("");
 };
 
-export const generateAnswersWord = async (variations, setAnswersUrl, encryptData) => {
+export const generateAnswersWord = async (variations, setAnswersUrl, encryptData, uuid) => {
     const children = [];
+    children.push(
+        new Paragraph({
+        children: [new TextRun({text: `${uuid}`, color: '#000000'})],
+        heading: HeadingLevel.HEADING_6,
+        alignment: AlignmentType.LEFT
+    }),)
+    children.push(new Paragraph({ text: "Test Javoblari", heading: "Heading1" }));
 
-
-    children.push(new Paragraph({text: "Test Javoblari", heading: "Heading1"}));
     for (const [index, variant] of variations.entries()) {
-        children.push(new Paragraph({text: `Test Variant-${index + 1}`, heading: "Heading2"}));
-        let answersString = `Test Variant ${index + 1} Javoblar:\n`;
+        children.push(new Paragraph({ text: `Test Variant-${index + 1}`, heading: "Heading2" }));
+        let answersString = `Test Variant ${index + 1} Javoblar: `;
+        const answerLettersRow = []; // Array to hold answer letters for the current variant
+
         variant.forEach((q, i) => {
             const questionIndex = Object.keys(q.options).indexOf(q.answer);
             const answerLetter = ["A", "B", "C", "D", "E"][questionIndex] || "?";
-            answersString += `${i + 1}. (${answerLetter})\n`
-            children.push(new Paragraph(`${i + 1}. (${answerLetter})`));
-
-
+            answersString += `${i + 1}. (${answerLetter}) `; // Keep adding to the string for QR code
+            answerLettersRow.push(`${i + 1}. (${answerLetter})`); // Add to the array for the row
         });
+
+        // Push the entire row of answer letters as a single paragraph
+        children.push(new Paragraph(answerLettersRow.join('   '))); // Adjust spacing as needed
+
         const encryptedAnswerText = encryptData(answersString);
         const qrCodeDataUrl = await QRCode.toDataURL(encryptedAnswerText);
         const qrCodeImage = await fetch(qrCodeDataUrl);
@@ -302,16 +327,18 @@ export const generateAnswersWord = async (variations, setAnswersUrl, encryptData
         children.push(new Paragraph("")); // spacing
     }
 
-
     const doc = new Document({
         sections: [
             {
                 children,
                 properties: {
                     type: SectionType.CONTINUOUS,
-                    column: {
-                        count: 2,
-                        space: 708,
+                    // Removed the column properties
+                    page: {
+                        margin: {
+                            top: 320,
+                            bottom: 250,
+                        },
                     },
                 }
             }
@@ -321,3 +348,256 @@ export const generateAnswersWord = async (variations, setAnswersUrl, encryptData
     const url = URL.createObjectURL(blob);
     setAnswersUrl(url);
 };
+
+
+
+export const generateCombinedTestWord = async (variations, zagolovokText, setCombinedUrl, encryptData, uuid) => {
+    const allSections = [];
+
+    for (const [index, questions] of variations.entries()) {
+        const sectionsForVariation = [];
+
+        if (index > 0) {
+            sectionsForVariation.push({
+                children: [new Paragraph({})],
+                properties: {
+                    pageBreakBefore: true,
+                },
+            });
+        }
+
+        // Header Section
+        const headerSection = {
+            children: [
+                new Paragraph({
+                    children: [new TextRun({text: `${uuid}`, color: '#000000'})],
+                    heading: HeadingLevel.HEADING_6,
+                    alignment: AlignmentType.LEFT
+                }),
+                new Paragraph({
+                    children: [new TextRun({ text: `${zagolovokText}`, color: '#000000', bold: true })],
+                    heading: HeadingLevel.HEADING_1,
+                    alignment: AlignmentType.CENTER
+                }),
+                new Paragraph({
+                    children: [new TextRun({ text: `Test Variant-${index + 1}`, color: '#000000', bold: true })],
+                    heading: HeadingLevel.HEADING_1,
+                    alignment: AlignmentType.CENTER
+                }),
+                new Paragraph({
+                    children: [new TextRun({
+                        text: "F.I.SH: __________________________________________________",
+                        color: '#000000',
+                        bold: true
+                    })],
+                }),
+                new Paragraph({
+                    children: [new TextRun({
+                        text: "Sinf: ____________________________________________________",
+                        color: '#000000',
+                        bold: true
+                    })],
+                }),
+                new Paragraph({
+                    children: [new TextRun({
+                        text: "Sana: ____________________________________________________",
+                        color: '#000000',
+                        bold: true
+                    })],
+                }),
+                new Paragraph({
+                    children: [new TextRun({ text: "", color: '#000000', bold: true })],
+                }),
+            ],
+            properties: {
+                page: {
+                    margin: {
+                        top: 320,
+                        bottom: 250,
+                    },
+                },
+            },
+        };
+        sectionsForVariation.push(headerSection);
+
+        // Questions Section (Two Columns)
+        const questionParagraphs = [];
+        for (const [i, q] of questions.entries()) {
+            questionParagraphs.push(
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: `${i + 1}.(${q.status==="b"?"Bilish":""}${q.status==="q"?"Qo'llash":""}${q.status==="m"?"Mulohaza":""}) ${q.questionText}`,
+                            font: "Cambria Math",
+                            size: 24
+                        })
+                    ],
+                    alignment: AlignmentType.JUSTIFIED
+                })
+            );
+
+            if (q.questionImage && typeof q.questionImage === 'string' && q.questionImage.startsWith('https://')) {
+                try {
+                    const response = await fetch(q.questionImage);
+                    const buffer = await response.arrayBuffer();
+                    questionParagraphs.push(
+                        new Paragraph({
+                            children: [
+                                new ImageRun({
+                                    type: "png",
+                                    data: buffer,
+                                    transformation: { width: 300, height: 200 },
+                                })
+                            ],
+                            alignment: AlignmentType.CENTER
+                        })
+                    );
+                } catch (error) {
+                    console.error("Failed to load image:", error);
+                }
+            }
+
+            const optionsLine = Object.keys(q.options).map((key, j) =>
+                `${String.fromCharCode(65 + j)}) ${q.options[key].text}`
+            ).join("    ");
+
+            questionParagraphs.push(
+                new Paragraph({
+                    children: [new TextRun({ text: optionsLine, size: 24, font: "Cambria Math" })],
+                    spacing: { after: 200 },
+                    alignment: AlignmentType.JUSTIFIED
+                })
+            );
+        }
+
+        const questionsSection = {
+            children: questionParagraphs,
+            properties: {
+                type: SectionType.CONTINUOUS,
+                column: {
+                    count: 2,
+                    space: 708,
+                },
+                margin: {
+                    top: 320,
+                    bottom: 250,
+                },
+            }
+        };
+        sectionsForVariation.push(questionsSection);
+
+        // Generate Answer Table
+        const answerRows = [];
+        const chunkSize = 10;
+        for (let i = 0; i < questions.length; i += chunkSize) {
+            const chunk = questions.slice(i, i + chunkSize);
+            const questionNumbersRow = new TableRow({
+                children: chunk.map((_, j) => new TableCell({
+                    children: [new Paragraph({
+                        children: [new TextRun({ text: `${i + j + 1}`, size: 25, color: '#000000' })]
+                    })]
+                }))
+            });
+
+            const answersRow = new TableRow({
+                children: chunk.map(() => new TableCell({
+                    children: [new Paragraph({
+                        children: [new TextRun({ text: "________", size: 10, color: "#FFFFFF" })]
+                    })]
+                })),
+                height: { value: 500, rule: "atLeast" },
+            });
+
+            answerRows.push(questionNumbersRow, answersRow);
+        }
+
+        const answerTable = new Table({
+            rows: answerRows,
+            width: { size: 100, type: WidthType.PERCENTAGE }
+        });
+
+        // Generate QR Code
+        let answersString = `Test Variant ${index + 1} Javoblar:\n`;
+        questions.forEach((q, i) => {
+            const letter = String.fromCharCode(65 + Object.keys(q.options).indexOf(q.answer));
+            answersString += `${i + 1}: ${letter}\n`;
+        });
+
+        const encrypted = encryptData(answersString);
+        const qrCodeDataUrl = await QRCode.toDataURL(encrypted);
+        const qrResponse = await fetch(qrCodeDataUrl);
+        const qrBuffer = await qrResponse.arrayBuffer();
+
+        // Split Footer into 3 parts
+
+        // Part 1: Javoblar header
+        sectionsForVariation.push({
+            children: [
+                new Paragraph({
+                    children: [
+                        new TextRun({
+                            text: "Javoblar:",
+                            size: 25,
+                            color: "#000000",
+                        }),
+                    ],
+                    spacing: { before: 300 },
+                }),
+            ],
+            properties: {
+                type: SectionType.CONTINUOUS,
+                margin: {
+                    top: 320,
+                    bottom: 100,
+                },
+            }
+        });
+
+        // Part 2: Answer Table (flexible for page breaking)
+        sectionsForVariation.push({
+            children: [answerTable],
+            properties: {
+                type: SectionType.CONTINUOUS,
+                margin: {
+                    top: 100,
+                    bottom: 100,
+                },
+            }
+        });
+
+        // Part 3: QR Code image
+        sectionsForVariation.push({
+            children: [
+                new Paragraph({
+                    children: [
+                        new ImageRun({
+                            type: "png",
+                            data: qrBuffer,
+                            transformation: { width: 150, height: 150 }
+                        })
+                    ],
+                    alignment: AlignmentType.RIGHT
+                }),
+                new Paragraph({ text: "", spacing: { after: 300 } }),
+            ],
+            properties: {
+                type: SectionType.CONTINUOUS,
+                margin: {
+                    top: 100,
+                    bottom: 250,
+                },
+            }
+        });
+
+        allSections.push(...sectionsForVariation);
+    }
+
+    const doc = new Document({
+        sections: allSections,
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    setCombinedUrl(url);
+};
+

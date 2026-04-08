@@ -6,9 +6,9 @@ const jwt = require('jsonwebtoken')
 router.post("/signup", async (req,res)=>{
     const {email, password, name} = req.body
     if (!email || !password || !name){
-        return res.status("400").json({error: "Hamma maydonlarni to'ldiring"})
+        return res.status(400).json({error: "Hamma maydonlarni to'ldiring"})
     }
-    Person.findOne({email})
+    await Person.findOne({email})
         .then(savedUser=>{
             if (savedUser){
                 return res.status(400).json({error: "Foydalanuvchi avval qo'shilgan"})
@@ -37,7 +37,7 @@ router.post("/signin", async (req,res)=>{
     if (!email || !password){
         return res.status(400).json({error: "Hamma maydonlarni to'ldiring"})
     }
-    Person.findOne({email})
+    await Person.findOne({email})
         .then(savedUser=>{
             if (!savedUser){
                 return res.status(400).json({error: "Bunday foydalanuvchi topilmadi"})
@@ -57,11 +57,11 @@ router.post("/signin", async (req,res)=>{
                     }
                 })
                 .catch(error=>{
-                    return res.status(400).json({error: "Internal server error"})
+                    return res.status(500).json({error: "Internal server error hash error"})
                 })
         })
         .catch(error=>{
-            return res.status(400).json({error: "Internal server error"})
+            return res.status(500).json({error: "Internal server error findone error"})
         })
 })
 
